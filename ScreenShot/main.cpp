@@ -298,7 +298,7 @@ LRESULT CALLBACK BlurBackGroundWindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, L
 }
 
 // 创建模糊背景窗口
-HWND CreateBlurBackgroundWindow(HINSTANCE hInstance) {
+HWND CreateBlurBackgroundWindow(HINSTANCE &hInstance) {
 	WNDCLASSEX wndclassex = {};
 	wndclassex.cbSize = sizeof(WNDCLASSEX);
 	wndclassex.lpfnWndProc = BlurBackGroundWindowProc;
@@ -315,7 +315,7 @@ HWND CreateBlurBackgroundWindow(HINSTANCE hInstance) {
 	HWND hwnd = CreateWindowEx(WS_EX_TOPMOST | WS_EX_NOPARENTNOTIFY | WS_EX_NOACTIVATE,
 		szWindowName,
 		NULL,
-		WS_BORDER,
+		WS_POPUP,
 		0,
 		0,
 		GetSystemMetrics(SM_CXSCREEN),
@@ -326,11 +326,10 @@ HWND CreateBlurBackgroundWindow(HINSTANCE hInstance) {
 		NULL);
 	if (hwnd == NULL)
 		return hwnd;
-	opt.window_appearance = ACCENT_ENABLE_TRANSPARENTGRADIENT;
-	opt.color = 0x00000000;
+	opt.window_appearance = ACCENT_ENABLE_BLURBEHIND;
+	opt.color = 0x32282828;
 	SetWindowBlur(hwnd);
-	ShowWindow(hwnd, SW_SHOWNA);
-	SetActiveWindow(hwnd);
+	ShowWindow(hwnd, SW_SHOW);
 	
 	return hwnd;
 }
@@ -339,7 +338,6 @@ HWND CreateBlurBackgroundWindow(HINSTANCE hInstance) {
 void MouseSelectRect(RECT &rect) {
 	POINT point_down;
 	POINT point_up;
-	POINT point;
 	bool wait = true;
 	while (wait) {	// 捕获最后一次释放鼠标左键的事件
 		if (!(GetAsyncKeyState(VK_LBUTTON) >> sizeof(char))) {
@@ -354,7 +352,6 @@ void MouseSelectRect(RECT &rect) {
 			bool move = true;
 			GetCursorPos(&point_down);
 			while (move) {
-				GetCursorPos(&point);
 				if (!(GetAsyncKeyState(VK_LBUTTON) >> sizeof(char))) {
 					GetCursorPos(&point_up);
 					move = false;
@@ -376,7 +373,7 @@ void MouseSelectRect(RECT &rect) {
 // INI相关
 #pragma region INIRelation
 // 读取INI文件初始化程序
-void initINI(tstring &savepath, RECT &rect, LPCTSTR &CaptureWindowName) {
+void initINI(tstring &savepath, RECT &rect, LPCTSTR &CaptureWindowName, HINSTANCE hInstance) {
 	INIParser ini_parser;	// INI类
 	if (ini_parser.ReadINI(INIPath)) {	// 文件存在，读取
 		if (fromString<bool>(ini_parser.GetValue(TEXT("Common"), TEXT("MouseSelectRect")))) {
@@ -425,20 +422,24 @@ void initINI(tstring &savepath, RECT &rect, LPCTSTR &CaptureWindowName) {
 // 程序入口
 #pragma region wWinMain
 int CALLBACK wWinMain(HINSTANCE hInstance, HINSTANCE hPreInst, LPTSTR pCmdLine, int nCmdShow) {
-	HWND hwndCap = NULL;			// 截图指定窗口句柄
+	HWND hwndCap = NULL;				// 截图指定窗口句柄
 	RECT rectShow = {};					// 截图矩形区域
-	tstring FileSavePath = NULL;			// 截图位图文件存储路径
-	HBITMAP ghBitmap = NULL;		// 位图句柄
+	tstring FileSavePath;				// 截图位图文件存储路径
+	HBITMAP ghBitmap = NULL;			// 位图句柄
 	LPCTSTR szCaptureWindowName = NULL;	// 窗口名称
-	SetProcessDPIAware();			// 高DPI时禁用缩放
-	initINI(FileSavePath, rectShow, szCaptureWindowName);
+	SetProcessDPIAware();				// 高DPI时禁用缩放
+	initINI(FileSavePath, rectShow, szCaptureWindowName, hInstance);
+
 	HWND hwnd = CreateBlurBackgroundWindow(hInstance);
+	if (hwnd == NULL)
+		return 0;
 	MSG msg = {};
 	while (GetMessage(&msg, NULL, 0, 0))
 	{
 		TranslateMessage(&msg);
 		DispatchMessage(&msg);
 	}
+
 	// 截图位图文件存储路径的目录是否存在，不存在则创建该目录
 	if (taccess(FileSavePath.c_str(), F_OK))
 		if (tmkdir(FileSavePath.c_str())) {
