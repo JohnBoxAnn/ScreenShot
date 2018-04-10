@@ -33,6 +33,7 @@ typedef wostream tostream;
 #define tmkdir _wmkdir
 #define tmakepath _wmakepath
 #define tmktemp _wmktemp
+#define tWinMain wWinMain
 #else
 typedef string tstring;					// ASC2×Ö·û´®
 typedef ostringstream tostringstream;	// ASC2×Ö·û´®Êä³öÁ÷
@@ -51,6 +52,7 @@ typedef ostream tostream;
 #define tmkdir _mkdir
 #define tmakepath _makepath
 #define tmktemp _mktemp
+#define tWinMain WinMain
 #endif
 
 #endif

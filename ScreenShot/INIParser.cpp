@@ -2,14 +2,7 @@
 
 //#define INIDEBUG
 
-INIParser::INIParser()
-{
-}
-
-
-INIParser::~INIParser()
-{
-}
+INIParser::INIParser() {}
 
 //************************************************************************
 // 函数名称:    	TrimString
@@ -20,8 +13,7 @@ INIParser::~INIParser()
 // 函数参数: 		string & str	输入的字符串
 // 返 回 值:   		std::string &	结果字符串
 //************************************************************************
-tstring &TrimString(tstring &str)
-{
+tstring &TrimString(tstring &str) {
 	tstring::size_type pos = 0;
 	while (str.npos != (pos = str.find(TEXT(" "))))
 		str = str.replace(pos, pos + 1, TEXT(""));
@@ -37,8 +29,7 @@ tstring &TrimString(tstring &str)
 // 函数参数: 		string path	INI文件的路径
 // 返 回 值:   		int
 //************************************************************************
-int INIParser::ReadINI(tstring path)
-{
+int INIParser::ReadINI(tstring path) {
 	wifstream in_conf_file(path.c_str());
 	if (!in_conf_file) return 0;
 	tstring str_line = TEXT("");
@@ -113,8 +104,7 @@ int INIParser::ReadINI(tstring path)
 // 函数参数: 		string key		配置项的键
 // 返 回 值:   		std::string		配置项的值
 //************************************************************************
-tstring INIParser::GetValue(tstring root, tstring key)
-{
+tstring INIParser::GetValue(tstring root, tstring key) {
 	map<tstring, SubNode>::iterator itr = map_ini.find(root);
 	map<tstring, tstring>::iterator sub_itr = itr->second.sub_node.find(key);
 	if (!(sub_itr->second).empty())
@@ -131,12 +121,14 @@ tstring INIParser::GetValue(tstring root, tstring key)
 // 函数参数: 		string path	INI文件的保存路径
 // 返 回 值:		int
 //************************************************************************
-int INIParser::WriteINI(tstring path)
-{
+int INIParser::WriteINI(tstring path) {
 	tofstream out_conf_file(path.c_str(), ios_base::out | ios_base::trunc);
 	if (!out_conf_file)
 		return 0;
 	//tcout << map_ini.size() << endl;
+	out_conf_file << TEXT("## IMPORTANCE: DO NOT DELETE ANY ISSUES. THERE IS NO COMPLETELY SECURITY CHECK IN THE APPICATION RIGHT NOW!")
+		<< endl << endl;
+
 	for (map<tstring, SubNode>::iterator itr = map_ini.begin(); itr != map_ini.end(); ++itr)
 	{
 		//tcout << itr->first << endl;
@@ -166,8 +158,7 @@ int INIParser::WriteINI(tstring path)
 // 函数参数: 		string value	配置项的值
 // 返 回 值:   		std::vector<ININode>::size_type	
 //************************************************************************
-vector<ININode>::size_type INIParser::SetValue(tstring root, tstring key, tstring value)
-{
+vector<ININode>::size_type INIParser::SetValue(tstring root, tstring key, tstring value) {
 	map<tstring, SubNode>::iterator itr = map_ini.find(root);	//查找
 	if (map_ini.end() != itr)
 	{
@@ -194,8 +185,7 @@ vector<ININode>::size_type INIParser::SetValue(tstring root, tstring key, tstrin
 // 函数参数: 		string key		配置项的键
 // 返 回 值:		std::vector<ININode>::size_type	
 //************************************************************************
-vector<ININode>::size_type INIParser::DeleteKey(tstring root, tstring key)
-{
+vector<ININode>::size_type INIParser::DeleteKey(tstring root, tstring key) {
 	map<tstring, SubNode>::iterator itr = map_ini.find(root);	//查找
 	if (map_ini.end() != itr)
 	{
@@ -215,8 +205,7 @@ vector<ININode>::size_type INIParser::DeleteKey(tstring root, tstring key)
 // 函数参数: 		string root		配置项的根节点
 // 返 回 值:   		std::vector<ININode>::size_type	
 //************************************************************************
-vector<ININode>::size_type INIParser::DeleteRoot(tstring root)
-{
+vector<ININode>::size_type INIParser::DeleteRoot(tstring root) {
 	map<tstring, SubNode>::iterator itr = map_ini.find(root);	//查找
 	if (map_ini.end() != itr)
 	{
@@ -235,8 +224,7 @@ vector<ININode>::size_type INIParser::DeleteRoot(tstring root)
 // 函数说明:		遍历打印INI文件
 // 返 回 值:   		void
 //************************************************************************
-void INIParser::Travel()
-{
+void INIParser::Travel() {
 	for (map<tstring, SubNode>::iterator itr = this->map_ini.begin(); itr != this->map_ini.end(); ++itr)
 	{
 		//root
@@ -249,7 +237,6 @@ void INIParser::Travel()
 	}
 }
 
-inline void SubNode::InsertElement(tstring key, tstring value)
-{
+inline void SubNode::InsertElement(tstring key, tstring value) {
 	sub_node.insert(pair<tstring, tstring>(key, value));
 }

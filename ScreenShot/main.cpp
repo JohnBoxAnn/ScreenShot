@@ -1,4 +1,5 @@
 // FOR UNICODE
+//
 // <INTRODUCTION: A light Program with C++ & Windows 10 API to get & save screen shot in Windows 10.
 // NOTICE: THIS PROGRAM IS ONLY FOR WINDOWS 10, CAUSE IT USES UNDOCUMENTED FUNCTIONS OF WINDOWS 10!>
 //
@@ -237,30 +238,36 @@ void SetWindowBlur(HWND hWnd)
 //opt.window_appearance = ACCENT_ENABLE_TRANSPARENTGRADIENT;	透明
 //opt.color = 0x00000000;
 
-// 画矩形
-void DrawRect(RECT &rect) {
-
-}
-
-// 窗口客户区重绘
-void Window_Paint() {
-
-}
-
-// 资源清理
-void Window_ClearUp() {
-	
-}
-
 // 模糊背景窗口过程函数
 LRESULT CALLBACK BlurBackGroundWindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
+	static RECT rectValidate;
+	static POINTS points_down = { 0,0 };
+	static POINTS points_up = { 0,0 };
+	static POINTS points = { 0,0 };
+	static HBRUSH hbr = CreateSolidBrush(RGB(255, 0, 0));
 	switch (uMsg)	// 根据不同的消息类型进行不同的处理
 	{
+	case WM_CREATE:	// 若是创建窗口消息
+		rectValidate.top = ((LPCREATESTRUCT)lParam)->y;
+		rectValidate.bottom = rectValidate.top + ((LPCREATESTRUCT)lParam)->cy;
+		rectValidate.left = ((LPCREATESTRUCT)lParam)->x;
+		rectValidate.right = rectValidate.left + ((LPCREATESTRUCT)lParam)->cx;
+		break;
+
 	case WM_PAINT:	// 若是客户区重绘消息
-		BeginPaint(hwnd, NULL);	// 调用窗口绘制函数
-		Window_Paint();
-		EndPaint(hwnd, NULL);
-		ValidateRect(hwnd, NULL);	// 更新客户区的显示，使无效区域变有效
+		HDC hdc;
+		PAINTSTRUCT ps;
+		hdc = BeginPaint(hwnd, &ps);	// 调用窗口绘制函数
+		EndPaint(hwnd, &ps);
+		ValidateRect(hwnd, &rectValidate);	// 更新客户区的显示，使无效区域变有效
+		break;
+
+	case WM_PRINT:	// 若是客户区打印消息
+		ps.rcPaint = rectShow;
+		hdc = BeginPaint(hwnd, &ps);	// 调用窗口绘制函数
+		FrameRect(hdc, &ps.rcPaint, hbr);
+		EndPaint(hwnd, &ps);
+		ValidateRect(hwnd, &rectValidate);	// 更新客户区的显示，使无效区域变有效
 		break;
 
 	case WM_KEYDOWN:	// 若是键盘按下消息
@@ -270,24 +277,28 @@ LRESULT CALLBACK BlurBackGroundWindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, L
 
 	case WM_MOUSEMOVE:	// 若是鼠标在窗口内移动
 		if (wParam == MK_LBUTTON) {	// 若是按住鼠标左键拖动
-			RECT rect;
-			rect.top = SwapClass<LPARAM, LONG>(lParam << sizeof(LONG));
-			DrawRect(rect);	// 画矩形
-			SendMessage(hwnd, WM_PAINT, NULL, NULL);
+			points = MAKEPOINTS(lParam);
+			SendMessage(hwnd, WM_PRINT, NULL, NULL);
 		}
 		break;
 
 	case WM_LBUTTONDOWN:	// 若是按下鼠标左键
-		SendMessage(hwnd, WM_PAINT, NULL, NULL);
+		points_down = MAKEPOINTS(lParam);
+		points = points_down;
+		SendMessage(hwnd, WM_PRINT, NULL, NULL);
 		break;
 		
 	case WM_LBUTTONUP:	// 若是释放鼠标左键
-
+		points_up = MAKEPOINTS(lParam);
+		rectShow.top = points_down.y < points_up.y ? points_down.y : points_up.y;
+		rectShow.bottom = points_down.y > points_up.y ? points_down.y : points_up.y;
+		rectShow.left = points_down.x < points_up.x ? points_down.x : points_up.x;
+		rectShow.right = points_down.x > points_up.x ? points_down.x : points_up.x;
 		DestroyWindow(hwnd);	// 摧毁窗口并发送一条WM_DESTROY消息
 		break;
 
 	case WM_DESTROY:	// 若是窗口摧毁消息
-		Window_ClearUp();	// 先调用资源清理函数清理掉预先的资源
+		DeleteObject(hbr);
 		PostQuitMessage(0);	// 向系统表明有个线程有终止请求，用来响应WM_DESTROY消息
 		break;
 
@@ -299,7 +310,7 @@ LRESULT CALLBACK BlurBackGroundWindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, L
 
 // 创建模糊背景窗口
 HWND CreateBlurBackgroundWindow(HINSTANCE &hInstance) {
-	WNDCLASSEX wndclassex = {};
+	WNDCLASSEX wndclassex = { 0 };
 	wndclassex.cbSize = sizeof(WNDCLASSEX);
 	wndclassex.lpfnWndProc = BlurBackGroundWindowProc;
 	wndclassex.cbClsExtra = 0;
@@ -326,15 +337,15 @@ HWND CreateBlurBackgroundWindow(HINSTANCE &hInstance) {
 		NULL);
 	if (hwnd == NULL)
 		return hwnd;
-	opt.window_appearance = ACCENT_ENABLE_BLURBEHIND;
-	opt.color = 0x32282828;
+	opt.window_appearance = ACCENT_ENABLE_TRANSPARENTGRADIENT;
+	opt.color = 0x00000000;
 	SetWindowBlur(hwnd);
 	ShowWindow(hwnd, SW_SHOW);
 	
 	return hwnd;
 }
 
-// 鼠标选取截图区域函数
+// 鼠标选取截图区域函数（弃用）
 void MouseSelectRect(RECT &rect) {
 	POINT point_down;
 	POINT point_up;
@@ -372,72 +383,77 @@ void MouseSelectRect(RECT &rect) {
 
 // INI相关
 #pragma region INIRelation
-// 读取INI文件初始化程序
-void initINI(tstring &savepath, RECT &rect, LPCTSTR &CaptureWindowName, HINSTANCE hInstance) {
-	INIParser ini_parser;	// INI类
-	if (ini_parser.ReadINI(INIPath)) {	// 文件存在，读取
-		if (fromString<bool>(ini_parser.GetValue(TEXT("Common"), TEXT("MouseSelectRect")))) {
-			if (IDNO == MessageBox(NULL, TEXT("下次是否重新选取截图区域？"), TEXT("提示"), MB_YESNO))
-				ini_parser.SetValue(TEXT("Common"), TEXT("MouseSelectRect"), toString(false));
-			else
-				ini_parser.SetValue(TEXT("Common"), TEXT("MouseSelectRect"), toString(true));
-			MessageBox(NULL, TEXT("请选取截图区域"), TEXT("提示"), MB_OK);
-			MouseSelectRect(rect);
-			ini_parser.SetValue(TEXT("Rect"), TEXT("top"), toString(rect.top));
-			ini_parser.SetValue(TEXT("Rect"), TEXT("bottom"), toString(rect.bottom));
-			ini_parser.SetValue(TEXT("Rect"), TEXT("left"), toString(rect.left));
-			ini_parser.SetValue(TEXT("Rect"), TEXT("right"), toString(rect.right));
-			ini_parser.WriteINI(INIPath);
-		}
-		else {
-			savepath = ini_parser.GetValue(TEXT("Common"), TEXT("ScreenCaptureSavePath"));
-			CaptureWindowName = ini_parser.GetValue(TEXT("Common"), TEXT("CaptureWindowName")).c_str();
-			rect.top = fromString<LONG>(ini_parser.GetValue(TEXT("Rect"), TEXT("top")));
-			rect.bottom = fromString<LONG>(ini_parser.GetValue(TEXT("Rect"), TEXT("bottom")));
-			rect.left = fromString<LONG>(ini_parser.GetValue(TEXT("Rect"), TEXT("left")));
-			rect.right = fromString<LONG>(ini_parser.GetValue(TEXT("Rect"), TEXT("right")));
-		}
-	}
-	else {	// 文件不存在，创建新文件，生成默认值
+// 读取INI文件初始化INI结构
+void initINI() {
+	if (!ini_parser.ReadINI(INIPath)) {	// 文件存在，读取
+		// 文件不存在，创建新文件，生成默认值
 		ini_parser.SetValue(TEXT("Common"), TEXT("ScreenCaptureSavePath"), DEFULTSavePath);
-		ini_parser.SetValue(TEXT("Common"), TEXT("CaptureWindowName"), toString(NULL));
+		ini_parser.SetValue(TEXT("Common"), TEXT("CaptureWindowName"), toString(false));
+		ini_parser.SetValue(TEXT("Common"), TEXT("MouseSelectRect"), toString(true));
+		ini_parser.SetValue(TEXT("Rect"), TEXT("top"), toString(0));
+		ini_parser.SetValue(TEXT("Rect"), TEXT("bottom"), toString(GetSystemMetrics(SM_CYSCREEN)));
+		ini_parser.SetValue(TEXT("Rect"), TEXT("left"), toString(0));
+		ini_parser.SetValue(TEXT("Rect"), TEXT("right"), toString(GetSystemMetrics(SM_CXSCREEN)));
+		WriteINI();
+	}
+}
+
+// 读取INI结构信息至程序变量
+void ReadINI(tstring &SavePath, RECT &rect, const TCHAR* CaptureWindowName) {
+	SavePath = ini_parser.GetValue(TEXT("Common"), TEXT("ScreenCaptureSavePath"));
+	CaptureWindowName = ini_parser.GetValue(TEXT("Common"), TEXT("CaptureWindowName")).c_str();
+	rect.top = fromString<LONG>(ini_parser.GetValue(TEXT("Rect"), TEXT("top")));
+	rect.bottom = fromString<LONG>(ini_parser.GetValue(TEXT("Rect"), TEXT("bottom")));
+	rect.left = fromString<LONG>(ini_parser.GetValue(TEXT("Rect"), TEXT("left")));
+	rect.right = fromString<LONG>(ini_parser.GetValue(TEXT("Rect"), TEXT("right")));
+}
+
+// 将当前INI结构信息写入INI文件
+inline void WriteINI() {
+	ini_parser.WriteINI(INIPath);
+}
+
+// 判断是否用鼠标选取截图区域
+bool isMouseSelectRect() {
+	if (fromString<bool>(ini_parser.GetValue(TEXT("Common"), TEXT("MouseSelectRect")))) {
 		if (IDNO == MessageBox(NULL, TEXT("下次是否重新选取截图区域？"), TEXT("提示"), MB_YESNO))
 			ini_parser.SetValue(TEXT("Common"), TEXT("MouseSelectRect"), toString(false));
 		else
 			ini_parser.SetValue(TEXT("Common"), TEXT("MouseSelectRect"), toString(true));
-		MessageBox(NULL, TEXT("请选取截图区域"), TEXT("提示"), MB_OK);
-		MouseSelectRect(rect);
-		ini_parser.SetValue(TEXT("Rect"), TEXT("top"), toString(rect.top));
-		ini_parser.SetValue(TEXT("Rect"), TEXT("bottom"), toString(rect.bottom));
-		ini_parser.SetValue(TEXT("Rect"), TEXT("left"), toString(rect.left));
-		ini_parser.SetValue(TEXT("Rect"), TEXT("right"), toString(rect.right));
-		ini_parser.WriteINI(INIPath);
-		savepath = DEFULTSavePath;
-		CaptureWindowName = NULL;
+		return true;
 	}
-	ini_parser.Clear();
+	return false;
 }
 #pragma endregion
 
 // 程序入口
 #pragma region wWinMain
-int CALLBACK wWinMain(HINSTANCE hInstance, HINSTANCE hPreInst, LPTSTR pCmdLine, int nCmdShow) {
-	HWND hwndCap = NULL;				// 截图指定窗口句柄
-	RECT rectShow = {};					// 截图矩形区域
-	tstring FileSavePath;				// 截图位图文件存储路径
-	HBITMAP ghBitmap = NULL;			// 位图句柄
-	LPCTSTR szCaptureWindowName = NULL;	// 窗口名称
-	SetProcessDPIAware();				// 高DPI时禁用缩放
-	initINI(FileSavePath, rectShow, szCaptureWindowName, hInstance);
-
-	HWND hwnd = CreateBlurBackgroundWindow(hInstance);
-	if (hwnd == NULL)
-		return 0;
-	MSG msg = {};
-	while (GetMessage(&msg, NULL, 0, 0))
-	{
-		TranslateMessage(&msg);
-		DispatchMessage(&msg);
+// 程序入口函数
+int CALLBACK tWinMain(HINSTANCE hInstance, HINSTANCE hPreInst, LPTSTR pCmdLine, int nCmdShow) {
+	HWND hwndCap = NULL;						// 截图指定窗口句柄
+	tstring FileSavePath;						// 截图位图文件存储路径
+	HBITMAP ghBitmap = NULL;					// 位图句柄
+	TCHAR szCaptureWindowName[100] = { NULL };	// 截图指定窗口名称
+	SetProcessDPIAware();						// 高DPI时禁用缩放
+	initINI();
+	ReadINI(FileSavePath, rectShow, szCaptureWindowName);
+	
+	// 判断是否重新选取截图矩形区域
+	if (isMouseSelectRect()) {
+		MessageBox(NULL, TEXT("请选取截图区域"), TEXT("提示"), MB_OK);
+		HWND hWnd = CreateBlurBackgroundWindow(hInstance);
+		if (hWnd == NULL)
+			return 0;
+		MSG msg = {};
+		while (GetMessage(&msg, NULL, 0, 0)) {
+			TranslateMessage(&msg);
+			DispatchMessage(&msg);
+		}
+		ini_parser.SetValue(TEXT("Rect"), TEXT("top"), toString(rectShow.top));
+		ini_parser.SetValue(TEXT("Rect"), TEXT("bottom"), toString(rectShow.bottom));
+		ini_parser.SetValue(TEXT("Rect"), TEXT("left"), toString(rectShow.left));
+		ini_parser.SetValue(TEXT("Rect"), TEXT("right"), toString(rectShow.right));
+		WriteINI();
 	}
 
 	// 截图位图文件存储路径的目录是否存在，不存在则创建该目录
@@ -448,11 +464,9 @@ int CALLBACK wWinMain(HINSTANCE hInstance, HINSTANCE hPreInst, LPTSTR pCmdLine, 
 		}
 
 	// 如果截指定窗口则改变rectShow，否则使用从INI读取的值截图
-	if (szCaptureWindowName != NULL)
-	{
+	if (*szCaptureWindowName != NULL) {
 		hwndCap = FindWindow(NULL, szCaptureWindowName);
-		if (!GetWindowRect(hwndCap, &rectShow))
-		{
+		if (!GetWindowRect(hwndCap, &rectShow)) {
 			MessageBox(NULL, TEXT("Can not Find the window to capture"), TEXT("ERROR!"), MB_OK);
 			return 0;
 		}
@@ -460,7 +474,7 @@ int CALLBACK wWinMain(HINSTANCE hInstance, HINSTANCE hPreInst, LPTSTR pCmdLine, 
 
 	// 截全屏要把&rectShow换成FULLSCREENCAPTURE，或手动设置INI文件
 	ghBitmap = ScreenCapture(TimeStringFilePath(FileSavePath), ColorBit, &rectShow);
-	
+
 	return 0;
 }
 #pragma endregion

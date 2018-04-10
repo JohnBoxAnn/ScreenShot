@@ -2,14 +2,14 @@
 #ifndef _HEADER_H_
 #define _HEADER_H_
 #include "INIParser.h"
-#define ColorBit (WORD)32
-#define FULLSCREENCAPTURE NULL	// 截全屏指令
-#define INIPath TEXT(".\\config.ini")	// INI文件路径
+#define ColorBit (WORD)32						// 颜色位数
+#define FULLSCREENCAPTURE NULL					// 截全屏指令
+#define INIPath TEXT(".\\config.ini")			// INI文件路径
 #define DEFULTSavePath TEXT(".\\screenshot")	//默认截图文件存储路径
-#define R_OK 4					// Test for read permission.
-#define W_OK 2					// Test for write permission.
-#define X_OK 1					// Test for execute permission.
-#define F_OK 0					// Test for existence.
+#define R_OK 4									// Test for read permission.
+#define W_OK 2									// Test for write permission.
+#define X_OK 1									// Test for execute permission.
+#define F_OK 0									// Test for existence.
 
 // 从字符串转换到其他类型
 template <class T>
@@ -39,6 +39,7 @@ inline R SwapClass(const V &v) {
 	return r;
 }
 
+// 以下用作改变窗口风格（感谢Github上的TranslucentTB项目给予的灵感）
 struct ACCENTPOLICY
 {
 	int nAccentState;
@@ -69,6 +70,18 @@ const int ACCENT_INVALID_STATE = 4;
 typedef BOOL(WINAPI*pSetWindowCompositionAttribute)(HWND, WINCOMPATTRDATA*);
 static pSetWindowCompositionAttribute SetWindowCompositionAttribute = (pSetWindowCompositionAttribute)GetProcAddress(GetModuleHandle(TEXT("user32.dll")), "SetWindowCompositionAttribute");
 
-LRESULT CALLBACK BlurBackGroundWindowProc(HWND, UINT, WPARAM, LPARAM);	// 窗口过程函数
+// 全局变量声明
 LPCTSTR szWindowName = TEXT("BackGroundWindow");	// 窗口类名
+INIParser ini_parser;	// INI类
+RECT rectShow;	// 截图矩形区域
+
+// 函数声明
+LRESULT CALLBACK BlurBackGroundWindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam);	// 窗口过程函数
+HBITMAP ScreenCapture(LPCTSTR FilePath, WORD BitCount, LPCRECT lpRect);
+LPCTSTR TimeStringFilePath(tstring SavePath);
+void SetWindowBlur(HWND hWnd);
+HWND CreateBlurBackgroundWindow(HINSTANCE &hInstance);
+void initINI();
+void ReadINI(tstring &SavePath, RECT &rect, const TCHAR* szCaptureWindowName);
+inline void WriteINI();
 #endif
