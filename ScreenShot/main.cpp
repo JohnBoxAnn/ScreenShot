@@ -245,6 +245,8 @@ LRESULT CALLBACK BlurBackGroundWindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, L
 	static POINTS points_up = { 0,0 };
 	static POINTS points = { 0,0 };
 	static HBRUSH hbr = CreateSolidBrush(RGB(255, 0, 0));
+	HDC hdc = NULL;
+	PAINTSTRUCT ps;
 	switch (uMsg)	// 根据不同的消息类型进行不同的处理
 	{
 	case WM_CREATE:	// 若是创建窗口消息
@@ -255,8 +257,6 @@ LRESULT CALLBACK BlurBackGroundWindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, L
 		break;
 
 	case WM_PAINT:	// 若是客户区重绘消息
-		HDC hdc;
-		PAINTSTRUCT ps;
 		hdc = BeginPaint(hwnd, &ps);	// 调用窗口绘制函数
 		EndPaint(hwnd, &ps);
 		ValidateRect(hwnd, &rectValidate);	// 更新客户区的显示，使无效区域变有效
@@ -299,6 +299,7 @@ LRESULT CALLBACK BlurBackGroundWindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, L
 
 	case WM_DESTROY:	// 若是窗口摧毁消息
 		DeleteObject(hbr);
+		DeleteObject(hdc);
 		PostQuitMessage(0);	// 向系统表明有个线程有终止请求，用来响应WM_DESTROY消息
 		break;
 
