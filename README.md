@@ -1,5 +1,7 @@
 # ScreenShot
 
+<b>README.MD NEEDS TO BE CHANGED</b>
+
 <b>INTRODUCTION: A light Program with C++ & Windows 10 API to get & save screen shot in Windows 10.</b>
 
 <b>NOTICE: </b>THIS PROGRAM IS ONLY FOR WINDOWS 10, CAUSE IT USES UNDOCUMENTED FUNCTIONS OF WINDOWS 10!
