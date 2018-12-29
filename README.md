@@ -1,6 +1,6 @@
 # ScreenShot
 
-<b>README.MD NEEDS TO BE CHANGED. THIS EDITION OF README.MD IS ONLY FITTING TO <i>ver.0.2.x-alpha</i> PROGRAME.</b>
+<b>README.MD NEEDS TO BE CHANGED. THIS EDITION OF README.MD IS ONLY FITTING TO <i>ver.0.2.x-alpha</i> PROGRAM.</b>
 
 <b>INTRODUCTION: A light Program with C++ & Windows 10 API to get & save screen shot in Windows 10.</b>
 
