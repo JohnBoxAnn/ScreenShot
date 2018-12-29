@@ -2,24 +2,6 @@
 
 //#define INIDEBUG
 
-INIParser::INIParser() {}
-
-//************************************************************************
-// 函数名称:    	TrimString
-// 访问权限:    	public 
-// 创建日期:		2017/01/05
-// 创 建 人:		
-// 函数说明:		去除空格
-// 函数参数: 		string & str	输入的字符串
-// 返 回 值:   		std::string &	结果字符串
-//************************************************************************
-tstring &TrimString(tstring &str) {
-	tstring::size_type pos = 0;
-	while (str.npos != (pos = str.find(TEXT(" "))))
-		str = str.replace(pos, pos + 1, TEXT(""));
-	return str;
-}
-
 //************************************************************************
 // 函数名称:    	ReadINI
 // 访问权限:    	public 
@@ -29,13 +11,11 @@ tstring &TrimString(tstring &str) {
 // 函数参数: 		string path	INI文件的路径
 // 返 回 值:   		int
 //************************************************************************
-int INIParser::ReadINI(tstring path) {
-	wifstream in_conf_file(path.c_str());
-	if (!in_conf_file) return 0;
+int INIParser::Read() {
 	tstring str_line = TEXT("");
 	tstring str_root = TEXT("");
 	vector<ININode> vec_ini;
-	while (getline(in_conf_file, str_line))
+	while (getline(fs, str_line))
 	{
 		tstring::size_type left_pos = 0;
 		tstring::size_type right_pos = 0;
@@ -52,8 +32,8 @@ int INIParser::ReadINI(tstring path) {
 		{
 			str_key = str_line.substr(0, equal_div_pos);
 			str_value = str_line.substr(equal_div_pos + 1, str_line.size() - 1);
-			str_key = TrimString(str_key);
-			str_value = TrimString(str_value);
+			str_key = this->TrimString(str_key);
+			str_value = this->TrimString(str_value);
 			//tcout << str_key << "=" << str_value << endl;
 		}
 
@@ -64,8 +44,6 @@ int INIParser::ReadINI(tstring path) {
 			//tcout << vec_ini.size() << endl;
 		}
 	}
-	in_conf_file.close();
-	in_conf_file.clear();
 
 	//vector convert to map
 	map<tstring, tstring> map_tmp;
@@ -121,29 +99,23 @@ tstring INIParser::GetValue(tstring root, tstring key) {
 // 函数参数: 		string path	INI文件的保存路径
 // 返 回 值:		int
 //************************************************************************
-int INIParser::WriteINI(tstring path) {
-	tofstream out_conf_file(path.c_str(), ios_base::out | ios_base::trunc);
-	if (!out_conf_file)
-		return 0;
+int INIParser::Write() {
 	//tcout << map_ini.size() << endl;
-	out_conf_file << TEXT("## IMPORTANCE: DO NOT DELETE ANY ISSUES. THERE IS NO COMPLETELY SECURITY CHECK IN THE APPICATION RIGHT NOW!")
+	fs << TEXT("## IMPORTANCE: DO NOT DELETE ANY ISSUES. THERE IS NO COMPLETELY SECURITY CHECK IN THE APPICATION RIGHT NOW!")
 		<< endl << endl;
 
 	for (map<tstring, SubNode>::iterator itr = map_ini.begin(); itr != map_ini.end(); ++itr)
 	{
 		//tcout << itr->first << endl;
-		out_conf_file << TEXT("[") << itr->first << TEXT("]") << endl;
+		fs << TEXT("[") << itr->first << TEXT("]") << endl;
 		for (map<tstring, tstring>::iterator sub_itr = itr->second.sub_node.begin(); sub_itr != itr->second.sub_node.end(); ++sub_itr)
 		{
 			//tcout << sub_itr->first << "=" << sub_itr->second << endl;
-			out_conf_file << TEXT("    ") << sub_itr->first << TEXT(" = ") << sub_itr->second << endl;
+			fs << TEXT("    ") << sub_itr->first << TEXT(" = ") << sub_itr->second << endl;
 		}
-		out_conf_file << endl;
+		fs << endl;
 	}
 	
-	out_conf_file.close();
-	out_conf_file.clear();
-
 	return 1;
 }
 
@@ -187,9 +159,10 @@ vector<ININode>::size_type INIParser::SetValue(tstring root, tstring key, tstrin
 //************************************************************************
 vector<ININode>::size_type INIParser::DeleteKey(tstring root, tstring key) {
 	map<tstring, SubNode>::iterator itr = map_ini.find(root);	//查找
+	map<tstring, tstring>::iterator sub_itr = itr->second.sub_node.find(key);
 	if (map_ini.end() != itr)
 	{
-		itr->second.sub_node[key].erase();
+		itr->second.sub_node.erase(sub_itr++);
 	}	//根节点已经存在了，删除键
 	//根节点不存在，什么都不做
 
@@ -209,7 +182,7 @@ vector<ININode>::size_type INIParser::DeleteRoot(tstring root) {
 	map<tstring, SubNode>::iterator itr = map_ini.find(root);	//查找
 	if (map_ini.end() != itr)
 	{
-		map_ini.erase(root);
+		map_ini.erase(itr++);
 	}	//根节点已经存在了，删除根节点
 	//根节点不存在，什么都不做
 
@@ -235,8 +208,4 @@ void INIParser::Travel() {
 			tcout << TEXT("    ") << itr1->first << TEXT(" = ") << itr1->second << endl;
 		}
 	}
-}
-
-inline void SubNode::InsertElement(tstring key, tstring value) {
-	sub_node.insert(pair<tstring, tstring>(key, value));
 }
