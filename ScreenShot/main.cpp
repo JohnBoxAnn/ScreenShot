@@ -215,7 +215,7 @@ LPCTSTR TimeStringFilePath(tstring &SavePath, tstring &ext) {
 	tm rtm;
 	localtime_s(&rtm, &t);
 	char time_c[20];
-	strftime(time_c, 20, "%Y-%m-%d_%H-%M-%S", &rtm);
+	strftime(time_c, 20, "%Y-%m-%d %H-%M-%S", &rtm);
 
 	oss << SavePath << TEXT('\\') << time_c << TEXT(".") << ext << TEXT('\0');
 
@@ -350,8 +350,8 @@ LRESULT CALLBACK BlurBackGroundWindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, L
 // 创建模糊背景窗口
 HWND CreateBlurBackgroundWindow(HINSTANCE &hInstance) {
 	HWND hwnd = CreateWindowEx(WS_EX_TOPMOST | WS_EX_NOACTIVATE,
-		L"BackGroundWindow",
-		L"Background",
+		TEXT("BackGroundWindow"),
+		TEXT("Background"),
 		WS_POPUP,
 		0,
 		0,
@@ -421,7 +421,7 @@ LRESULT CALLBACK MAINPROC(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 		break;
 
 	case WM_CLOSE:
-		if (MessageBox(NULL, L"真的要退出吗？", L"提示", MB_YESNO) == IDYES)
+		if (MessageBox(NULL, TEXT("真的要退出吗？"), TEXT("提示"), MB_YESNO) == IDYES)
 			DestroyWindow(hWnd);	// 摧毁窗口并发送一条WM_DESTROY消息
 		break;
 
@@ -584,8 +584,8 @@ void SetDataPath(HWND hWnd) {
 	OPENFILENAME file = { 0 };
 	file.hwndOwner = hWnd;
 	file.lStructSize = sizeof(file);
-	file.lpstrFilter = L"文本文件(*.txt)\0*.txt\0所有文件(*.*)\0*.*\0";	// 要选择的文件后缀 
-	file.lpstrInitialDir = L".\\";	// 默认的文件路径 
+	file.lpstrFilter = TEXT("文本文件(*.txt)\0*.txt\0所有文件(*.*)\0*.*\0");	// 要选择的文件后缀 
+	file.lpstrInitialDir = TEXT(".\\");	// 默认的文件路径 
 	file.lpstrFile = szBuffer;	// 存放文件路径的缓冲区 
 	file.nMaxFile = sizeof(szBuffer) / sizeof(*szBuffer);
 	file.nFilterIndex = 0;
@@ -634,7 +634,7 @@ void initTray(HWND parent) {
 	Tray.cbSize = sizeof(Tray);
 	Tray.hIcon = LoadIcon(GetModuleHandle(NULL), MAKEINTRESOURCE(MAINICON));
 	Tray.hWnd = parent;
-	wcscpy_s(Tray.szTip, L"图像采集程序");
+	wcscpy_s(Tray.szTip, TEXT("图像采集程序"));
 	Tray.uCallbackMessage = WM_NOTIFY_MAIN;
 	Tray.uFlags = NIF_ICON | NIF_TIP | NIF_MESSAGE;
 	Tray.uID = 101;
@@ -646,7 +646,7 @@ void initTray(HWND parent) {
 int InitWindow(HINSTANCE &hInstance) {
 	WNDCLASSEX Wndclassex = { 0 };
 	Wndclassex.hInstance = hInstance;
-	Wndclassex.lpszClassName = L"ScreenShot";
+	Wndclassex.lpszClassName = TEXT("ScreenShot");
 	Wndclassex.lpfnWndProc = MAINPROC;
 	Wndclassex.style = CS_HREDRAW | CS_VREDRAW;
 	Wndclassex.cbClsExtra = 0;
@@ -654,7 +654,7 @@ int InitWindow(HINSTANCE &hInstance) {
 	Wndclassex.cbSize = sizeof(WNDCLASSEX);
 	Wndclassex.hIcon = LoadIcon(NULL, IDI_APPLICATION);
 	Wndclassex.hCursor = LoadCursor(NULL, IDC_ARROW);
-	Wndclassex.lpszMenuName = L"POPUP";
+	Wndclassex.lpszMenuName = TEXT("POPUP");
 	Wndclassex.hbrBackground = (HBRUSH)BLACK_BRUSH;
 
 	WNDCLASSEX wndclassex = { 0 };
@@ -668,7 +668,7 @@ int InitWindow(HINSTANCE &hInstance) {
 	wndclassex.hCursor = LoadCursor(NULL, IDC_CROSS);
 	wndclassex.hbrBackground = (HBRUSH)WHITE_BRUSH;
 	wndclassex.lpszMenuName = NULL;
-	wndclassex.lpszClassName = L"BackGroundWindow";
+	wndclassex.lpszClassName = TEXT("BackGroundWindow");
 	if (!RegisterClassEx(&wndclassex) || !RegisterClassEx(&Wndclassex)) {
 		MessageBox(NULL, TEXT("注册窗口类失败"), TEXT("ERROR!"), MB_OK);
 		return 0;
@@ -684,8 +684,8 @@ HWND CreateMainWindow(HINSTANCE &hInstance) {
 	menu = GetSubMenu(popup, 0);
 	HWND tray_hwnd = CreateWindowEx(
 		WS_EX_TOOLWINDOW,
-		L"ScreenShot",
-		L"TrayWindow",
+		TEXT("ScreenShot"),
+		TEXT("TrayWindow"),
 		WS_OVERLAPPED,
 		0,
 		0,
@@ -740,7 +740,7 @@ void initINI() {
 	TCHAR *ext = new TCHAR[10];
 	GetModuleFileName(NULL, inipath, MAX_PATH);
 	t_splitpath_s(inipath, driver, 10, dir, MAX_PATH, filename, 50, ext, 10);
-	t_makepath_s(inipath, MAX_PATH, driver, dir, L"config", L"ini");
+	t_makepath_s(inipath, MAX_PATH, driver, dir, TEXT("config"), TEXT("ini"));
 	INIPath = inipath;	// 固定INI文件路径
 	delete[] inipath, driver, dir, filename, ext;
 
@@ -820,7 +820,7 @@ int ReadData2Start() {
 			return 0;
 		}
 
-	HWND hwnd = FindWindow(L"TdxW_MainFrame_Class", NULL);
+	HWND hwnd = FindWindow(TEXT("TdxW_MainFrame_Class"), NULL);
 	//HWND hwnd = FindWindow(L"Notepad", NULL);
 
 	if (hwnd == NULL) {
@@ -836,7 +836,7 @@ int ReadData2Start() {
 				InputString(data_parser->code);
 				InputKey(__Enter, KEY_STD, 50);
 				Sleep(500);
-				InputString(L"49");
+				InputString(TEXT("49"));
 				InputKey(__Enter, KEY_STD, 50);
 				Sleep(500);
 				InputString(data_node.end.year);
@@ -846,7 +846,7 @@ int ReadData2Start() {
 				InputString(data_node.end.day);
 				InputKey(__Enter, KEY_STD, 50);
 				Sleep(500);
-				InputString(L"42");
+				InputString(TEXT("42"));
 				InputKey(__Enter, KEY_STD, 50);
 				Sleep(500);
 				InputString(data_node.begin.year);
@@ -858,10 +858,10 @@ int ReadData2Start() {
 				Sleep(1000);
 				ghBitmap = ScreenCapture(CodeStringFilePath(FileSavePath,
 					data_parser->code, data_node, ext), ColorBit, &rectShow);
-				InputString(L"42");
+				InputString(TEXT("42"));
 				InputKey(__Enter, KEY_STD, 50);
 				Sleep(500);
-				InputString(L"49");
+				InputString(TEXT("49"));
 				InputKey(__Enter, KEY_STD, 50);
 				Sleep(1000);
 			}
@@ -872,7 +872,7 @@ int ReadData2Start() {
 				InputString(data_parser->code);
 				InputKey(__Enter, KEY_STD, 50);
 				Sleep(500);
-				InputString(L"49");
+				InputString(TEXT("49"));
 				InputKey(__Enter, KEY_STD, 50);
 				Sleep(500);
 				InputString(data_node.end.year);
@@ -884,7 +884,7 @@ int ReadData2Start() {
 				Sleep(1000);
 				ghBitmap = ScreenCapture(CodeStringFilePath(FileSavePath,
 					data_parser->code, data_node, ext), ColorBit, &rectShow);
-				InputString(L"49");
+				InputString(TEXT("49"));
 				InputKey(__Enter, KEY_STD, 50);
 				Sleep(1000);
 			}
@@ -991,7 +991,7 @@ unsigned long WINAPI RSRThread(void* param) {
 	HWND hwnd = CreateBlurBackgroundWindow(*(HINSTANCE*)param);
 	
 	if (hwnd == NULL) {
-		MessageBox(NULL, L"窗口未创建", L"ERROR!", MB_OK);
+		MessageBox(NULL, TEXT("窗口未创建"), TEXT("ERROR!"), MB_OK);
 		return 0;
 	}
 	SetForegroundWindow(hwnd);
@@ -1008,7 +1008,7 @@ unsigned long WINAPI RSRThread(void* param) {
 
 unsigned long WINAPI SSCThread(void* param) {
 	if (!ReadData2Start())
-		MessageBox(NULL, L"ReadData2Start()函数出错",L"ERROR!", MB_OK);
+		MessageBox(NULL, TEXT("ReadData2Start()函数出错"),TEXT("ERROR!"), MB_OK);
 	return 0;
 }
 #pragma endregion
@@ -1043,7 +1043,7 @@ void InitDriver() {
 	//加载驱动
 	bLoadDriver = ManageDriver(KEYMOUSE_DRIVER_NAME, DRIVER_FUNC_INSTALL);
 	if (!bLoadDriver)
-		MessageBox(NULL, L"驱动加载失败!", L"ERROR!", MB_OK);
+		MessageBox(NULL, TEXT("驱动加载失败!"), TEXT("ERROR!"), MB_OK);
 }
 
 // 卸载驱动

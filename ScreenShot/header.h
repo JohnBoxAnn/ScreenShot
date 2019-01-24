@@ -61,9 +61,9 @@ HWND hwndCap = NULL;						// 截图指定窗口句柄
 tstring FileSavePath = DEFULTSavePath;		// 图像文件存储路径
 tstring DataPath = DEFULTDataPath;			// 数据文件存储路径
 tstring INIPath;							// 配置文件存储路径
-tstring ext = L"bmp";						// 图像文件后缀名
+tstring ext = TEXT("bmp");						// 图像文件后缀名
 HBITMAP ghBitmap = NULL;					// 位图句柄
-TCHAR szCaptureWindowName[100] = { L'\0' };	// 截图指定窗口名称
+TCHAR szCaptureWindowName[100] = { TEXT('\0') };	// 截图指定窗口名称
 tostringstream oss;							// 字符串转换连接器
 // int sleep_time = 100;	// 等待时间
 bool bRSRrun = true;	// 选择截图区域子窗口运行标志

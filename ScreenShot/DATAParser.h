@@ -9,7 +9,7 @@ public:
 	Date(tstring date) {
 		Transfrom(date);
 	}
-	Date() :year(L"1970"), month(L"01"), day(L"01") {}
+	Date() :year(TEXT("1970")), month(TEXT("01")), day(TEXT("01")) {}
 	~Date() {}
 	void Transfrom(tstring date);
 	tstring Transto();
